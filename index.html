@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DL24 Κονσόλα</title>
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI","Inter",system-ui,sans-serif;
+  --mono:"SF Mono",ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;
+  --desk:linear-gradient(135deg,#c9d6ea 0%,#e8dff0 50%,#f4e3d7 100%);
+  --win:rgba(246,246,248,.84); --side:rgba(232,232,237,.72); --bar:rgba(250,250,252,.82);
+  --card:#ffffff; --card2:#f5f5f7; --sep:rgba(0,0,0,.09); --grid:rgba(0,0,0,.07); --text:#1d1d1f; --muted:#6e6e73;
+  --accent:#0a84ff; --volt:#ff9f0a; --amp:#32ade6; --ok:#30d158; --bad:#ff453a; --warn:#ff9f0a;
+  --shadow:0 30px 80px rgba(0,0,0,.22),0 0 0 .5px rgba(0,0,0,.2);
+  --field:#ffffff; --seg:rgba(118,118,128,.12); --segOn:#ffffff; --tipbg:rgba(255,255,255,.9);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --desk:linear-gradient(135deg,#1b2333 0%,#2a1f33 55%,#33241c 100%);
+  --win:rgba(30,30,32,.84); --side:rgba(44,44,48,.62); --bar:rgba(38,38,41,.84);
+  --card:#2c2c2e; --card2:#3a3a3c; --sep:rgba(255,255,255,.09); --grid:rgba(255,255,255,.07); --text:#f5f5f7; --muted:#98989d;
+  --shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 .5px rgba(255,255,255,.12);
+  --field:#1c1c1e; --seg:rgba(118,118,128,.24); --segOn:#636366; --tipbg:rgba(44,44,46,.92);
+}}
+:root[data-theme="dark"]{
+  --desk:linear-gradient(135deg,#1b2333 0%,#2a1f33 55%,#33241c 100%);
+  --win:rgba(30,30,32,.84); --side:rgba(44,44,48,.62); --bar:rgba(38,38,41,.84);
+  --card:#2c2c2e; --card2:#3a3a3c; --sep:rgba(255,255,255,.09); --grid:rgba(255,255,255,.07); --text:#f5f5f7; --muted:#98989d;
+  --shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 .5px rgba(255,255,255,.12);
+  --field:#1c1c1e; --seg:rgba(118,118,128,.24); --segOn:#636366; --tipbg:rgba(44,44,46,.92);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;background:var(--desk);background-attachment:fixed;font-family:var(--font);color:var(--text);font-size:13px;padding:22px;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+.window{max-width:1400px;margin:0 auto;border-radius:12px;overflow:hidden;background:var(--win);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);box-shadow:var(--shadow);display:grid;grid-template-columns:280px minmax(0,1fr);grid-template-rows:52px 1fr;min-height:calc(100vh - 44px)}
+.toolbar{grid-column:1/3;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--bar);border-bottom:.5px solid var(--sep)}
+.title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.appicon{width:22px;height:22px;border-radius:6px;background:linear-gradient(160deg,#ffb340,#ff7a00);display:grid;place-items:center;color:#fff;font-size:13px;box-shadow:inset 0 .5px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.2)}
+.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:var(--seg);font-size:12px;color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#8e8e93}
+.dot.on{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.dot.wait{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.sp{flex:1}
+.btn{border:0;border-radius:7px;padding:5px 12px;background:var(--card);box-shadow:0 .5px 1.5px rgba(0,0,0,.18),inset 0 0 0 .5px var(--sep);cursor:pointer;white-space:nowrap;transition:filter .12s,transform .05s}
+.btn:hover:not(:disabled){filter:brightness(1.04)}
+.btn:active:not(:disabled){transform:translateY(.5px);filter:brightness(.95)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.blue{background:linear-gradient(180deg,#3d9bff,#0a7aff);color:#fff;box-shadow:0 1px 2px rgba(0,122,255,.4),inset 0 .5px 0 rgba(255,255,255,.35)}
+.btn.green{background:linear-gradient(180deg,#45dd6c,#28b84d);color:#fff;box-shadow:0 1px 2px rgba(40,184,77,.4),inset 0 .5px 0 rgba(255,255,255,.4)}
+.btn.red{background:linear-gradient(180deg,#ff6259,#e8352b);color:#fff;box-shadow:0 1px 2px rgba(232,53,43,.4),inset 0 .5px 0 rgba(255,255,255,.35)}
+.btn.big{padding:9px 14px;font-size:14px;font-weight:600;border-radius:9px;flex:1}
+.btn.small{padding:3px 9px;font-size:12px}
+.langbtn{height:26px;padding:0 8px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.iconbtn{width:30px;height:26px;padding:0;display:inline-grid;place-items:center;font-size:14px}
+.seg{display:inline-flex;background:var(--seg);border-radius:8px;padding:2px}
+.seg button{border:0;background:transparent;padding:3px 12px;border-radius:6px;font-size:12px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--segOn);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+aside{background:var(--side);border-right:.5px solid var(--sep);padding:18px 14px;display:flex;flex-direction:column;gap:20px}
+.sec h3{margin:0 0 8px 6px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.group{background:var(--card);border-radius:10px;box-shadow:inset 0 0 0 .5px var(--sep);overflow:hidden}
+.grow{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:.5px solid var(--sep)}
+.grow:last-child{border-bottom:0}
+.grow label{flex:1}
+.field{font-family:var(--mono);width:84px;text-align:right;background:var(--field);border:0;border-radius:6px;padding:4px 8px;box-shadow:inset 0 0 0 .5px var(--sep);outline:none;transition:box-shadow .15s}
+.field:focus{box-shadow:inset 0 0 0 .5px var(--sep),0 0 0 3px rgba(10,132,255,.45)}
+.field:disabled{opacity:.5}
+.field.wide{width:100%;text-align:left;font-family:var(--font)}
+.unit{color:var(--muted);width:12px}
+.note{font-size:11.5px;color:var(--muted);padding:2px 6px;line-height:1.45}
+.row{display:flex;gap:8px}
+.prog{height:6px;border-radius:3px;background:var(--seg);overflow:hidden;margin:10px 0 6px}
+.prog b{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--accent),#64d2ff);transition:width .5s}
+main{padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.banner{background:rgba(255,159,10,.14);color:var(--text);border-radius:10px;padding:10px 14px;line-height:1.5;box-shadow:inset 0 0 0 .5px rgba(255,159,10,.5)}
+.banner.err{background:rgba(255,69,58,.13);box-shadow:inset 0 0 0 .5px rgba(255,69,58,.5)}
+.banner.info{background:rgba(10,132,255,.12);box-shadow:inset 0 0 0 .5px rgba(10,132,255,.45)}
+.banner.ok{background:rgba(48,209,88,.14);box-shadow:inset 0 0 0 .5px rgba(48,209,88,.5)}
+.note.warn{color:var(--bad)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--card);border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06),inset 0 0 0 .5px var(--sep);min-width:0;transition:background .3s}
+.tile .l{font-size:11.5px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:6px}
+.tile .l i{width:8px;height:8px;border-radius:2px}
+.tile .v{font-size:30px;font-weight:300;letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .v small{font-size:14px;color:var(--muted);font-weight:400;margin-left:3px;letter-spacing:0}
+.tile.hero .v{font-weight:500}
+.tile.v1 .v{color:var(--volt)}.tile.a1 .v{color:var(--amp)}
+.tile.onTile{background:linear-gradient(160deg,rgba(48,209,88,.22),rgba(48,209,88,.06)),var(--card)}
+.tile.offTile{background:linear-gradient(160deg,rgba(255,69,58,.18),rgba(255,69,58,.05)),var(--card)}
+.loadv{font-weight:700!important;letter-spacing:1px!important;display:flex;align-items:center;gap:10px}
+.loadv i{width:14px;height:14px;border-radius:50%;background:#8e8e93}
+.onTile .loadv{color:var(--ok)}.onTile .loadv i{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.offTile .loadv{color:var(--bad)}.offTile .loadv i{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+.card{background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),inset 0 0 0 .5px var(--sep);padding:14px 16px;min-width:0}
+.chead{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.chead h2{margin:0 6px 0 0;font-size:15px;font-weight:600}
+.legend{display:flex;gap:12px;color:var(--muted);font-size:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.chartwrap{position:relative}
+canvas{display:block;width:100%}
+#chart{height:330px}
+.tip{position:absolute;pointer-events:none;background:var(--tipbg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:10px;padding:9px 12px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.18),inset 0 0 0 .5px var(--sep);min-width:170px;z-index:3}
+.tip b{display:block;margin-bottom:5px;color:var(--muted);font-weight:500}
+.tip div{display:flex;justify-content:space-between;gap:16px;font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1.6}
+.tip span{font-family:var(--font);color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11.5px;font-weight:500;color:var(--muted);text-align:left;padding:6px 10px;white-space:nowrap}
+td{padding:8px 10px;border-top:.5px solid var(--sep)}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:rgba(127,127,127,.06)}
+tr.sel td{background:rgba(10,132,255,.13)!important}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.act{white-space:nowrap;text-align:right}
+td.act .btn{margin-left:4px}
+.chip{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--seg);color:var(--muted);white-space:nowrap}
+.chip.good{background:rgba(48,209,88,.16);color:var(--ok)}
+.tablewrap{overflow-x:auto}
+input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;margin:0;cursor:pointer;vertical-align:middle}
+th.chk,td.chk{width:34px;padding-right:0}
+tr.checked td{background:rgba(10,132,255,.06)}
+.btn.danger{color:var(--bad)}
+details summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+#log{font-family:var(--mono);font-size:11px;background:var(--card2);border-radius:8px;padding:8px;height:220px;overflow:auto;white-space:pre-wrap;margin-top:8px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:20;display:flex;padding:24px}
+.modal[hidden]{display:none}
+.modalBox{flex:1;background:var(--win);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;overflow:auto;min-width:0}
+.modalHead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.modalHead h2{margin:0;font-size:17px;font-weight:600}
+.modalHead .sub{color:var(--muted);font-size:12.5px}
+#bigChart{height:60vh;min-height:280px}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:14px}
+.res{background:var(--card);border-radius:10px;padding:10px 13px;box-shadow:0 1px 3px rgba(0,0,0,.06),inset 0 0 0 .5px var(--sep)}
+.res .lbl{font-size:11.5px;color:var(--muted);font-weight:500}
+.res .val{font-size:20px;font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
+.res.hl .val{color:var(--volt);font-weight:600}
+@media (max-width:1000px){
+  body{padding:0}
+  .window{border-radius:0;grid-template-columns:1fr;grid-template-rows:auto auto 1fr;min-height:100vh}
+  .toolbar{grid-column:1;flex-wrap:wrap;padding:10px 12px}
+  aside{border-right:0;border-bottom:.5px solid var(--sep)}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tile .v{font-size:26px}
+}
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="toolbar">
+    <div class="title"><div class="appicon">⚡</div>DL24 Κονσόλα</div>
+    <div class="pill"><span class="dot" id="dot"></span><span id="statusTxt">Αποσυνδεδεμένο</span></div>
+    <div class="sp"></div>
+    <div class="seg" id="seg">
+      <button data-view="live" class="on">Ζωντανά</button>
+      <button data-view="hist">Ιστορικό</button>
+      <button data-view="file">Αρχείο</button>
+    </div>
+    <button id="btnLang" class="btn langbtn" title="Γλώσσα / Language">EL</button>
+    <button id="btnTheme" class="btn iconbtn" title="Θέμα: Αυτόματο">◐</button>
+    <button id="btnConnect" class="btn blue">Σύνδεση</button>
+  </div>
+
+  <aside>
+    <div class="sec">
+      <h3>Έλεγχος φορτίου</h3>
+      <div class="group">
+        <div class="grow"><label for="inCur">Ρεύμα</label><input id="inCur" class="field" type="number" step="0.01" min="0" max="20" value="0.50"><span class="unit">A</span></div>
+        <div class="grow"><label for="inCut">Αποκοπή</label><input id="inCut" class="field" type="number" step="0.01" min="0" max="200" value="3.00"><span class="unit">V</span></div>
+      </div>
+      <div class="row" style="margin-top:8px"><button id="btnApply" class="btn blue" style="flex:1;padding:7px">Ορισμός</button></div>
+      <div class="note" id="presets" style="margin-top:6px">Η συσκευή έχει: —</div>
+      <div class="row" style="margin-top:10px"><button id="btnOn" class="btn big green">ON</button><button id="btnOff" class="btn big red">OFF</button></div>
+      <div class="row" style="margin-top:8px"><button id="btnReset" class="btn" style="flex:1">Μηδενισμός μετρητών</button></div>
+    </div>
+    <div class="sec">
+      <h3>Τεστ χωρητικότητας</h3>
+      <div class="group"><div class="grow"><input id="inName" class="field wide" type="text" placeholder="Όνομα μπαταρίας (π.χ. 18650 #1)"></div></div>
+      <div class="prog" id="progWrap" hidden><b id="prog"></b></div>
+      <div class="note" id="testState" style="margin-top:6px"></div>
+      <div class="note" id="wakeNote" hidden></div>
+      <div class="row" style="margin-top:8px"><button id="btnTest" class="btn big blue">Έναρξη τεστ</button></div>
+      <div class="note" id="testHint" style="margin-top:8px"></div>
+    </div>
+  </aside>
+
+  <main>
+    <div id="resumeBox" class="banner info" hidden>
+      <div id="resumeTxt"></div>
+      <div class="row" style="margin-top:10px;flex-wrap:wrap">
+        <button id="btnResume" class="btn blue">Συνέχεια τεστ</button>
+        <button id="btnResumeSave" class="btn">Αποθήκευση ως έχει</button>
+        <button id="btnResumeDrop" class="btn">Απόρριψη</button>
+      </div>
+    </div>
+    <div id="banner" class="banner" hidden></div>
+
+    <div class="tiles">
+      <div class="tile v1 hero"><div class="l"><i style="background:var(--volt)"></i>Τάση</div><div class="v"><span id="rV">—</span><small>V</small></div></div>
+      <div class="tile a1 hero"><div class="l"><i style="background:var(--amp)"></i>Ρεύμα</div><div class="v"><span id="rA">—</span><small>A</small></div></div>
+      <div class="tile"><div class="l">Ισχύς</div><div class="v"><span id="rW">—</span><small>W</small></div></div>
+      <div class="tile" id="loadTile"><div class="l">Φορτίο</div><div class="v loadv"><i></i><span id="rLoad">—</span></div></div>
+      <div class="tile"><div class="l">Χωρητικότητα</div><div class="v"><span id="rMah">—</span><small>mAh</small></div></div>
+      <div class="tile"><div class="l">Ενέργεια</div><div class="v"><span id="rWh">—</span><small>Wh</small></div></div>
+      <div class="tile"><div class="l">Θερμοκρασία MOSFET</div><div class="v"><span id="rT">—</span><small>°C</small></div></div>
+      <div class="tile"><div class="l">Χρόνος</div><div class="v"><span id="rTime">—</span></div></div>
+    </div>
+
+    <div class="card">
+      <div class="chead">
+        <h2 id="chartTitle">Ζωντανό γράφημα</h2>
+        <div class="legend"><span><i style="background:var(--volt)"></i>Τάση</span><span><i style="background:var(--amp)"></i>Ρεύμα</span></div>
+        <div class="sp"></div>
+        <button id="btnImport" class="btn">Εισαγωγή CSV</button>
+        <button id="btnCsv" class="btn">Εξαγωγή CSV</button>
+        <button id="btnClear" class="btn">Καθαρισμός</button>
+        <button id="btnExpand" class="btn iconbtn" title="Μεγέθυνση">⤢</button>
+        <input id="fileCsv" type="file" accept=".csv,text/csv" hidden>
+      </div>
+      <div class="chartwrap"><canvas id="chart"></canvas><div class="tip" id="tip" hidden></div></div>
+    </div>
+
+    <div class="card" style="padding:10px 6px 6px">
+      <div class="chead" style="padding:2px 10px 0">
+        <h2>Ιστορικό τεστ</h2><span class="note" id="histCount"></span>
+        <div class="sp"></div>
+        <button id="btnDelSel" class="btn small" disabled>Διαγραφή επιλεγμένων</button>
+        <button id="btnDelAll" class="btn small">Διαγραφή όλων</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th class="chk"><input type="checkbox" id="chkAll" title="Επιλογή όλων"></th><th>Ημερομηνία</th><th>Μπαταρία</th><th>Ρεύμα</th><th>Αποκοπή</th><th>mAh</th><th>Wh</th><th>Διάρκεια</th><th></th><th></th></tr></thead>
+          <tbody id="hist"></tbody>
+        </table>
+      </div>
+      <div class="note" id="histEmpty" style="padding:8px 10px">Δεν υπάρχουν τεστ ακόμα.</div>
+    </div>
+
+    <div class="card">
+      <details id="logDetails">
+        <summary>Διαγνωστικά (raw δεδομένα επικοινωνίας)</summary>
+        <div id="log"></div>
+        <div class="row" style="margin-top:8px;align-items:center"><button id="btnCopyLog" class="btn">Αντιγραφή</button><span class="note" id="modeInfo"></span></div>
+      </details>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal" hidden>
+  <div class="modalBox">
+    <div class="modalHead">
+      <h2 id="mTitle">Διάγραμμα</h2><span class="sub" id="mSub"></span>
+      <div class="sp"></div>
+      <div class="legend"><span><i style="background:var(--volt)"></i>Τάση</span><span><i style="background:var(--amp)"></i>Ρεύμα</span></div>
+      <button id="btnPng" class="btn blue">Αποθήκευση εικόνας</button>
+      <button id="btnClose" class="btn">Κλείσιμο</button>
+    </div>
+    <div class="chartwrap"><canvas id="bigChart"></canvas><div class="tip" id="bigTip" hidden></div></div>
+    <div class="results" id="mResults"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- γλώσσα: EL / EN ---------- */
+// Τα κείμενα γράφονται στα ελληνικά στον κώδικα· το t() τα μεταφράζει όταν η γλώσσα είναι Αγγλικά.
+const LANG_KEY = 'dl24-lang-v1';
+let lang = 'el';
+const EN = {
+  // στατικά
+  'DL24 Κονσόλα': 'DL24 Console', 'Έλεγχος φορτίου': 'Load control', 'Έναρξη τεστ': 'Start test',
+  'Όνομα μπαταρίας (π.χ. 18650 #1)': 'Battery name (e.g. 18650 #1)', 'Αντιγραφή': 'Copy',
+  'Αποθήκευση εικόνας': 'Save image', 'Αποθήκευση ως έχει': 'Save as is', 'Αποκοπή': 'Cutoff',
+  'Αποσυνδεδεμένο': 'Disconnected', 'Απόρριψη': 'Discard', 'Αρχείο': 'File', 'Δεν υπάρχουν τεστ ακόμα.': 'No tests yet.',
+  'Διάγραμμα': 'Chart', 'Διάρκεια': 'Duration', 'Διαγνωστικά (raw δεδομένα επικοινωνίας)': 'Diagnostics (raw communication data)',
+  'Διαγραφή επιλεγμένων': 'Delete selected', 'Διαγραφή όλων': 'Delete all', 'Εισαγωγή CSV': 'Import CSV',
+  'Ενέργεια': 'Energy', 'Εξαγωγή CSV': 'Export CSV', 'Επιλογή όλων': 'Select all', 'Ζωντανά': 'Live',
+  'Ζωντανό γράφημα': 'Live chart', 'Η συσκευή έχει: —': 'Device has: —', 'Ημερομηνία': 'Date',
+  'Θέμα: Αυτόματο': 'Theme: Auto', 'Θερμοκρασία MOSFET': 'MOSFET temperature', 'Ιστορικό': 'History',
+  'Ιστορικό τεστ': 'Test history', 'Ισχύς': 'Power', 'Καθαρισμός': 'Clear', 'Κλείσιμο': 'Close',
+  'Μεγέθυνση': 'Expand', 'Μηδενισμός μετρητών': 'Reset counters', 'Μπαταρία': 'Battery', 'Ορισμός': 'Apply',
+  'Ρεύμα': 'Current', 'Συνέχεια τεστ': 'Resume test', 'Σύνδεση': 'Connect', 'Τάση': 'Voltage',
+  'Τεστ χωρητικότητας': 'Capacity test', 'Φορτίο': 'Load', 'Χρόνος': 'Time', 'Χωρητικότητα': 'Capacity',
+  'Γλώσσα / Language': 'Language / Γλώσσα',
+  // σύνδεση & κατάσταση
+  'η θύρα έκλεισε': 'the port closed', 'λάθος checksum': 'bad checksum', 'Πρωτόκολλο: Atorch (τύπος ': 'Protocol: Atorch (type ',
+  'Άνοιγμα θύρας…': 'Opening port…', 'Δεν άνοιξε η θύρα (': 'Could not open the port (',
+  '). Αν είναι Bluetooth, δοκίμασε την άλλη θύρα COM — χρειάζεται η «Εξερχόμενη» (Outgoing). Βεβαιώσου επίσης ότι δεν την έχει ανοιχτή άλλο πρόγραμμα.':
+    '). If it is Bluetooth, try the other COM port — you need the “Outgoing” one. Also make sure no other program has it open.',
+  'Αποσύνδεση': 'Disconnect', 'Η θύρα άνοιξε στα 9600 bps': 'Port opened at 9600 bps', 'Αναγνώριση συσκευής…': 'Detecting device…',
+  'Η συσκευή δεν απαντά': 'Device not responding', 'Η συσκευή δεν απαντά…': 'Device not responding…',
+  'Η θύρα άνοιξε αλλά δεν έρχονται δεδομένα. Βεβαιώσου ότι το DL24 είναι αναμμένο και ότι διάλεξες τη σωστή θύρα COM (την «Εξερχόμενη»). Συνεχίζω να προσπαθώ…':
+    'The port is open but no data is arriving. Make sure the DL24 is switched on and that you picked the right COM port (the “Outgoing” one). Still trying…',
+  'Πρωτόκολλο: ': 'Protocol: ', 'Συνδέθηκε · πλήρης έλεγχος': 'Connected · full control',
+  'Πρωτόκολλο: PX100 (πλήρης έλεγχος)': 'Protocol: PX100 (full control)', 'Συνδέθηκε · μόνο ανάγνωση': 'Connected · read only',
+  'Η συσκευή στέλνει δεδομένα με το πρωτόκολλο Atorch, που δεν επιτρέπει ρύθμιση ρεύματος και αποκοπής από τον υπολογιστή. Ρύθμισέ τα από τα κουμπιά του DL24 — η ανάγνωση, το γράφημα και το τεστ δουλεύουν κανονικά.':
+    'The device is sending data using the Atorch protocol, which does not allow setting current and cutoff from the computer. Set them with the DL24 buttons — readings, the chart and the test work normally.',
+  'Τρέχει τεστ. Αν αποσυνδεθείς, η καταγραφή θα σταματήσει και το τεστ θα αποθηκευτεί ως διακομμένο (το DL24 θα συνεχίσει να εκφορτίζει μέχρι την αποκοπή).\n\nΑποσύνδεση;':
+    'A test is running. If you disconnect, recording will stop and the test will be saved as interrupted (the DL24 will keep discharging until the cutoff).\n\nDisconnect?',
+  'Χάθηκε η σύνδεση (': 'Connection lost (', 'Επανασύνδεση…': 'Reconnecting…', 'Επανασύνδεση… (προσπάθεια ': 'Reconnecting… (attempt ',
+  'Χάθηκε η σύνδεση με το DL24 — προσπαθώ να ξανασυνδεθώ αυτόματα.': 'Lost connection to the DL24 — trying to reconnect automatically.',
+  ' Το τεστ συνεχίζει κανονικά μέσα στη συσκευή και η καταγραφή θα συνεχιστεί μόλις επανέλθει η σύνδεση.':
+    ' The test keeps running inside the device and recording will resume as soon as the connection is back.',
+  'Η θύρα δεν άνοιξε ακόμα: ': 'Port not open yet: ', 'Η θύρα ξανάνοιξε': 'Port reopened',
+  '✓ Η σύνδεση αποκαταστάθηκε': '✓ Connection restored', ' — η καταγραφή του τεστ συνεχίζει.': ' — test recording continues.',
+  'καμία απάντηση για 15 δευτερόλεπτα': 'no response for 15 seconds', 'η συσκευή αποσυνδέθηκε': 'the device was disconnected',
+  'Αυτός ο browser δεν υποστηρίζει σύνδεση με σειριακή θύρα. Άνοιξε το αρχείο με Google Chrome ή Microsoft Edge σε υπολογιστή.':
+    'This browser does not support serial port connections. Open the file with Google Chrome or Microsoft Edge on a computer.',
+  // αναστολή & συνέχιση
+  '☀︎ Ο υπολογιστής δεν θα μπει σε αναστολή όσο τρέχει το τεστ.': '☀︎ The computer will not go to sleep while the test is running.',
+  '⚠︎ Το παράθυρο είναι ελαχιστοποιημένο — τα Windows μπορεί να μπουν σε αναστολή. Άφησέ το ανοιχτό (μπορεί να είναι πίσω από άλλα παράθυρα).':
+    '⚠︎ The window is minimized — Windows may go to sleep. Leave it open (it can be behind other windows).',
+  '⚠︎ Δεν μπόρεσα να εμποδίσω την αναστολή. Βάλε «Αναστολή: Ποτέ» στις ρυθμίσεις ενέργειας των Windows για όσο διαρκεί το τεστ.':
+    '⚠︎ Could not prevent sleep. Set “Sleep: Never” in the Windows power settings for the duration of the test.',
+  'Η αυτόματη αποθήκευση απέτυχε: ': 'Autosave failed: ', 'Βρέθηκε τεστ που δεν ολοκληρώθηκε: «': 'Found an unfinished test: “',
+  '», ξεκίνησε ': '”, started ', ', τελευταία καταγραφή πριν από ': ', last recorded ', 'λιγότερο από 1 λεπτό': 'less than a minute ago',
+  ' λεπτά': ' minutes ago',
+  'Αν το DL24 μετράει ακόμα (ή τελείωσε χωρίς να το σβήσεις), πάτα «Συνέχεια τεστ» και μετά «Σύνδεση» — θα πάρω το τελικό αποτέλεσμα από τη συσκευή.':
+    'If the DL24 is still measuring (or finished without you switching it off), press “Resume test” and then “Connect” — the final result will be read from the device.',
+  'Συνεχίζει…': 'Resuming…', 'Συνεχίζει — πάτα «Σύνδεση» για να συνδεθείς στο DL24.': 'Resuming — press “Connect” to connect to the DL24.',
+  'Να διαγραφεί το τεστ που δεν ολοκληρώθηκε;': 'Delete the unfinished test?',
+  // έλεγχος & τεστ
+  'Βάλε ρεύμα από 0 έως 20 A.': 'Enter a current from 0 to 20 A.', 'Βάλε τάση αποκοπής από 0 έως 200 V.': 'Enter a cutoff voltage from 0 to 200 V.',
+  'Αποστολή…': 'Sending…', 'Επιβεβαίωση από τη συσκευή…': 'Waiting for device confirmation…', '✓ Η συσκευή έχει: ': '✓ Device has: ',
+  'Ρύθμισε ρεύμα και αποκοπή από τα κουμπιά του DL24. Πάτησε «Έναρξη τεστ» (μηδενίζει τους μετρητές) και μετά άναψε το φορτίο από τη συσκευή. Το τεστ τελειώνει όταν μηδενιστεί το ρεύμα.':
+    'Set current and cutoff with the DL24 buttons. Press “Start test” (resets the counters) and then switch the load on from the device. The test ends when the current drops to zero.',
+  'Χρησιμοποιεί το ρεύμα και την αποκοπή από πάνω. Μηδενίζει τους μετρητές, ανάβει το φορτίο και τελειώνει αυτόματα στην τάση αποκοπής.':
+    'Uses the current and cutoff above. Resets the counters, switches the load on and stops automatically at the cutoff voltage.',
+  'Βάλε ρεύμα τεστ μεγαλύτερο από 0 (έως 20 A).': 'Enter a test current above 0 (up to 20 A).', 'Βάλε τάση αποκοπής μεγαλύτερη από 0.': 'Enter a cutoff voltage above 0.',
+  'Η τάση αποκοπής (': 'The cutoff voltage (', ' V) είναι ίση ή μεγαλύτερη από την τάση της μπαταρίας (': ' V) is equal to or higher than the battery voltage (',
+  ' V). Το τεστ θα σταματούσε αμέσως.': ' V). The test would stop immediately.',
+  'Προετοιμασία…': 'Preparing…', 'Διακοπή τεστ': 'Stop test', 'Σε εξέλιξη…': 'Running…', 'Σε εξέλιξη': 'Running',
+  'Αναμονή για φορτίο': 'Waiting for load', ' · δεν καταγράφηκαν αρκετά δεδομένα': ' · not enough data recorded',
+  // αποτελέσματα / κατάσταση τεστ (αποθηκεύονται στα ελληνικά, μεταφράζονται στην εμφάνιση)
+  'Ολοκληρώθηκε': 'Completed', 'Διακόπηκε': 'Interrupted', 'Το φορτίο δεν ξεκίνησε': 'Load did not start',
+  'Διακόπηκε από τον χρήστη': 'Stopped by user', 'Διακόπηκε (αποσύνδεση)': 'Interrupted (disconnected)',
+  'Διακόπηκε (έκλεισε η κονσόλα)': 'Interrupted (console closed)',
+  // ιστορικό
+  'Δεν μπόρεσα να αποθηκεύσω το ιστορικό σε αυτόν τον browser. Κατέβασε τα τεστ σε CSV για να μη χαθούν.':
+    'Could not save the history in this browser. Export the tests to CSV so they are not lost.',
+  ' από ': ' of ', ' επιλεγμένα': ' selected', 'Διαγραφή επιλεγμένων (': 'Delete selected (', 'Διαγραφή ': 'Delete ',
+  'του επιλεγμένου τεστ': 'the selected test', 'των ': 'the ', ' επιλεγμένων τεστ': ' selected tests',
+  ';\nΔεν μπορεί να αναιρεθεί.': '?\nThis cannot be undone.', 'Διαγραφή ΟΛΩΝ των τεστ από το ιστορικό (': 'Delete ALL tests from the history (',
+  ');\nΔεν μπορεί να αναιρεθεί — αν θέλεις να τα κρατήσεις, κατέβασέ τα πρώτα σε CSV.': ')?\nThis cannot be undone — if you want to keep them, export them to CSV first.',
+  'Διαγραφή': 'Delete', 'Διαγραφή του τεστ «': 'Delete the test “', '»;': '”?',
+  'Δεν υπάρχουν αποθηκευμένα τεστ ακόμα.': 'There are no saved tests yet.',
+  // γράφημα, CSV, αποτελέσματα
+  'Δεν υπάρχουν δεδομένα για εξαγωγή.': 'No data to export.', 'Δεν γίνεται καθαρισμός όσο τρέχει τεστ.': 'Cannot clear while a test is running.',
+  'Αρχείο: ': 'File: ', 'Τεστ: ': 'Test: ', 'Δεν υπάρχουν δεδομένα ακόμα': 'No data yet', '<b>Χρόνος ': '<b>Time ',
+  'Ρεύμα (ρύθμιση)': 'Current (setting)', 'Μέσο ρεύμα': 'Average current', 'Τάση αποκοπής': 'Cutoff voltage',
+  'Τάση έναρξης': 'Start voltage', 'Τάση τέλους': 'End voltage', 'Μέση τάση': 'Average voltage', 'Μέση ισχύς': 'Average power',
+  'Μέγ. θερμ. MOSFET': 'Max MOSFET temp.', 'Κατάσταση': 'Status', 'ενημερώνεται ζωντανά': 'updating live',
+  'Δεν υπάρχουν δεδομένα για αποθήκευση.': 'No data to save.', 'Δεν μπόρεσα να διαβάσω το αρχείο: ': 'Could not read the file: ',
+  'το αρχείο έχει πολύ λίγες γραμμές.': 'the file has too few lines.',
+  'δεν βρέθηκαν μετρήσεις. Χρησιμοποίησε αρχείο που εξήχθη από την Κονσόλα.': 'no measurements found. Use a file exported from the Console.',
+  // θέμα
+  'Αυτόματο (όπως τα Windows)': 'Auto (follows Windows)', 'Φωτεινό': 'Light', 'Σκοτεινό': 'Dark',
+  'Θέμα: ': 'Theme: ', ' — κλικ για αλλαγή': ' — click to change'
+};
+function t(s) { return (lang === 'en' && typeof s === 'string' && Object.prototype.hasOwnProperty.call(EN, s)) ? EN[s] : s; }
+const L = (el, en) => lang === 'en' ? en : el;           // για φράσεις που δεν σπάνε σε κομμάτια
+const loc = () => lang === 'en' ? 'en-GB' : 'el-GR';     // μορφή ημερομηνίας
+
+// στατικά κείμενα της σελίδας: κρατάμε το ελληνικό πρωτότυπο κάθε κόμβου
+const i18nOrig = new WeakMap();
+function applyStatic() {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => (n.parentElement && n.parentElement.closest('script,style,#log')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
+  for (let n; (n = walker.nextNode());) {
+    if (!i18nOrig.has(n)) { const k = n.nodeValue.trim(); if (!k || !EN[k]) continue; i18nOrig.set(n, n.nodeValue); }
+    const o = i18nOrig.get(n), k = o.trim();
+    n.nodeValue = lang === 'en' ? o.replace(k, EN[k]) : o;
+  }
+  for (const el of document.querySelectorAll('[placeholder],[title]')) {
+    for (const a of ['placeholder', 'title']) {
+      if (!el.hasAttribute(a)) continue;
+      const key = 'i18n' + a;
+      if (!el.dataset[key]) { if (!EN[el.getAttribute(a)]) continue; el.dataset[key] = el.getAttribute(a); }
+      el.setAttribute(a, t(el.dataset[key]));
+    }
+  }
+}
+function setLang(l) {
+  lang = l === 'en' ? 'en' : 'el';
+  document.documentElement.lang = lang;
+  $('btnLang').textContent = lang.toUpperCase();
+  applyStatic();
+  if (typeof relocalize === 'function') relocalize();
+}
+$('btnLang').onclick = () => {
+  const next = lang === 'en' ? 'el' : 'en';
+  try { localStorage.setItem(LANG_KEY, next); } catch (e) {}
+  setLang(next);
+};
+const HIST_KEY = 'dl24-history-v1';
+
+const st = {
+  port: null, reader: null, keep: false, buf: [], mode: null,
+  pending: null, chain: Promise.resolve(),
+  pollBusy: false, pollN: 0, fails: 0, atorchSeen: false,
+  portInfo: null, lastRx: 0, reconnecting: false, reopenBusy: false, reconnTries: 0, gapNext: false,
+  tick: 0, wake: null,
+  live: { v: null, a: null, mah: null, wh: null, temp: null, time: null, on: null, presetA: null, cutV: null },
+  samples: [], t0: null, test: null, viewing: null, selHist: null, imported: null, drawPending: false,
+  hover: {}, logLines: [], logPending: false, hist: []
+};
+
+/* ---------- βοηθητικά ---------- */
+const hex = a => Array.from(a, b => b.toString(16).padStart(2, '0')).join(' ');
+const fx = (x, d) => (x == null || isNaN(x)) ? '—' : x.toFixed(d);
+function fmtDur(sec) {
+  if (sec == null || isNaN(sec)) return '—';
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+function num(id) {
+  const el = $(id);
+  let v = el.valueAsNumber;
+  if (isNaN(v)) v = parseFloat(String(el.value).replace(',', '.'));
+  return v;
+}
+function setStatus(txt, cls) { st.statusArgs = [txt, cls]; $('statusTxt').textContent = t(txt); $('dot').className = 'dot' + (cls ? ' ' + cls : ''); }
+function setTS(fn) { st.tsFn = fn; $('testState').textContent = fn(); }
+function banner(msg, err) {
+  const b = $('banner');
+  if (!msg) { b.hidden = true; return; }
+  b.hidden = false; b.className = 'banner' + (err ? ' err' : ''); b.textContent = msg;
+}
+
+/* ---------- διαγνωστικό log ---------- */
+function log(tag, data) {
+  const t = new Date().toTimeString().slice(0, 8);
+  st.logLines.push(t + '  ' + tag.padEnd(5) + (typeof data === 'string' ? data : hex(data)));
+  if (st.logLines.length > 500) st.logLines.splice(0, st.logLines.length - 500);
+  if ($('logDetails').open && !st.logPending) {
+    st.logPending = true;
+    requestAnimationFrame(() => { st.logPending = false; renderLog(); });
+  }
+}
+function renderLog() { const el = $('log'); el.textContent = st.logLines.join('\n'); el.scrollTop = el.scrollHeight; }
+$('logDetails').addEventListener('toggle', () => { if ($('logDetails').open) renderLog(); });
+$('btnCopyLog').onclick = () => { navigator.clipboard.writeText(st.logLines.join('\n')).catch(() => {}); };
+
+/* ---------- σειριακή θύρα ---------- */
+async function write(arr) {
+  const w = st.port.writable.getWriter();
+  try { await w.write(new Uint8Array(arr)); log('TX', arr); }
+  finally { w.releaseLock(); }
+}
+
+// PX100: ερώτηση/εντολή με αναμονή απάντησης, σε σειρά
+function px(cmd, d1 = 0, d2 = 0, ack = false) {
+  const run = () => new Promise(resolve => {
+    if (!st.port || !st.keep) { resolve(null); return; }
+    const timer = setTimeout(() => { st.pending = null; resolve(null); }, ack ? 500 : 700);
+    st.pending = { ack, resolve: v => { clearTimeout(timer); st.pending = null; resolve(v); } };
+    write([0xB1, 0xB2, cmd, d1 & 255, d2 & 255, 0xB6]).catch(() => { clearTimeout(timer); st.pending = null; resolve(null); });
+  });
+  const p = st.chain.then(run, run);
+  st.chain = p;
+  return p;
+}
+
+// Atorch: εντολή (ADU 0x02), χωρίς αναμονή συγκεκριμένης απάντησης
+function atCmd(cmd, val = 0) {
+  const p = [0xFF, 0x55, 0x11, 0x02, cmd, (val >>> 24) & 255, (val >>> 16) & 255, (val >>> 8) & 255, val & 255];
+  let s = 0; for (let i = 2; i < p.length; i++) s = (s + p[i]) & 255;
+  p.push(s ^ 0x44);
+  const run = () => (st.port && st.keep) ? write(p).then(() => sleep(150)).catch(() => {}) : Promise.resolve();
+  const pr = st.chain.then(run, run);
+  st.chain = pr;
+  return pr;
+}
+
+async function readLoop() {
+  const gen = st.readGen = (st.readGen || 0) + 1;    // μόνο ένας βρόχος ανάγνωσης κάθε φορά
+  while (st.port && st.port.readable && st.keep && gen === st.readGen) {
+    st.reader = st.port.readable.getReader();
+    try {
+      for (;;) {
+        const { value, done } = await st.reader.read();
+        if (done) break;
+        if (value && value.length) {
+          st.lastRx = Date.now();
+          for (const b of value) st.buf.push(b);
+          log('RX', value);
+          parse();
+        }
+      }
+    } catch (e) {
+      if (st.keep) log('ERR', String(e.message || e));
+    } finally {
+      try { st.reader.releaseLock(); } catch (e) {}
+      st.reader = null;
+    }
+    if (st.keep) await sleep(300);
+  }
+  if (st.keep && !st.reconnecting && gen === st.readGen) connectionLost(t('η θύρα έκλεισε'));
+}
+
+function parse() {
+  const buf = st.buf;
+  while (buf.length) {
+    const b0 = buf[0];
+    if (b0 === 0xFF) {
+      if (buf.length < 3) return;
+      if (buf[1] !== 0x55) { buf.shift(); continue; }
+      const type = buf[2];
+      const len = type === 0x01 ? 36 : type === 0x02 ? 8 : type === 0x11 ? 10 : 0;
+      if (!len) { buf.splice(0, 2); continue; }
+      if (buf.length < len) return;
+      const pkt = buf.splice(0, len);
+      let s = 0; for (let i = 2; i < len - 1; i++) s = (s + pkt[i]) & 255;
+      if ((s ^ 0x44) !== pkt[len - 1]) { log('BAD', t('λάθος checksum')); continue; }
+      onAtorch(pkt);
+      continue;
+    }
+    if (b0 === 0xCA) {
+      if (buf.length < 7) return;
+      if (buf[1] === 0xCB && buf[5] === 0xCE && buf[6] === 0xCF) {
+        const p = buf.splice(0, 7);
+        onPx([p[2], p[3], p[4]]);
+        continue;
+      }
+      buf.shift(); continue;
+    }
+    if (b0 === 0x6F) { buf.shift(); onAck(); continue; }
+    buf.shift();
+  }
+}
+
+function onPx(d) { if (st.pending && !st.pending.ack) st.pending.resolve(d); }
+function onAck() { if (st.pending && st.pending.ack) st.pending.resolve(true); }
+
+function onAtorch(p) {
+  if (p[2] !== 0x01) return;           // μόνο αναφορές κατάστασης
+  st.atorchSeen = true;
+  if (st.mode !== 'atorch') return;
+  const u24 = o => (p[o] << 16) | (p[o + 1] << 8) | p[o + 2];
+  const u32 = o => ((p[o] << 24) >>> 0) + (p[o + 1] << 16) + (p[o + 2] << 8) + p[o + 3];
+  const u16 = o => (p[o] << 8) | p[o + 1];
+  const L = st.live;
+  if (p[3] === 0x03) {                  // διάταξη «USB meter»
+    L.v = u24(4) / 100; L.a = u24(7) / 100; L.mah = u24(10); L.wh = u32(13) / 100;
+    L.temp = u16(0x15); L.time = u16(0x17) * 3600 + p[0x19] * 60 + p[0x1A];
+  } else {                              // διάταξη «DC meter» (0x02)
+    L.v = u24(4) / 10; L.a = u24(7) / 1000; L.mah = u24(10) * 10; L.wh = u32(13) / 100;
+    L.temp = u16(0x18); L.time = u16(0x1A) * 3600 + p[0x1C] * 60 + p[0x1D];
+  }
+  L.on = L.a > 0.005;
+  $('modeInfo').textContent = t('Πρωτόκολλο: Atorch (τύπος ') + p[3] + ')';
+  pushSample(); render(); checkTest();
+}
+
+/* ---------- σύνδεση / αναγνώριση ---------- */
+async function connect() {
+  let port;
+  try {
+    port = await navigator.serial.requestPort();
+  } catch (e) { return; } // ο χρήστης έκλεισε το παράθυρο
+  try {
+    setStatus('Άνοιγμα θύρας…', 'wait');
+    await port.open({ baudRate: 9600 });
+  } catch (e) {
+    setStatus('Αποσυνδεδεμένο');
+    banner(t('Δεν άνοιξε η θύρα (') + e.message + t('). Αν είναι Bluetooth, δοκίμασε την άλλη θύρα COM — χρειάζεται η «Εξερχόμενη» (Outgoing). Βεβαιώσου επίσης ότι δεν την έχει ανοιχτή άλλο πρόγραμμα.'), true);
+    return;
+  }
+  st.port = port; st.keep = true; st.buf = []; st.mode = null; st.fails = 0; st.atorchSeen = false;
+  st.chain = Promise.resolve(); st.pending = null; st.reconnecting = false; st.lastRx = Date.now();
+  try { st.portInfo = JSON.stringify(port.getInfo()); } catch (e) { st.portInfo = null; }
+  banner(null);
+  $('btnConnect').textContent = t('Αποσύνδεση'); $('btnConnect').classList.remove('blue');
+  log('INFO', t('Η θύρα άνοιξε στα 9600 bps'));
+  readLoop();
+  setStatus('Αναγνώριση συσκευής…', 'wait');
+  await sleep(1500);
+  detect();
+}
+
+async function detect() {
+  if (!st.keep) return;
+  for (let i = 0; i < 3 && st.keep && !st.mode; i++) {
+    const r = await px(0x10);
+    if (r) st.mode = 'px100';
+  }
+  if (!st.keep) return;
+  if (!st.mode && st.atorchSeen) st.mode = 'atorch';
+  if (!st.mode) {
+    setStatus('Η συσκευή δεν απαντά', 'wait');
+    banner(t('Η θύρα άνοιξε αλλά δεν έρχονται δεδομένα. Βεβαιώσου ότι το DL24 είναι αναμμένο και ότι διάλεξες τη σωστή θύρα COM (την «Εξερχόμενη»). Συνεχίζω να προσπαθώ…'));
+    setTimeout(detect, 3000);
+    return;
+  }
+  banner(null);
+  log('INFO', t('Πρωτόκολλο: ') + st.mode);
+  if (st.mode === 'px100') {
+    setStatus('Συνδέθηκε · πλήρης έλεγχος', 'on');
+    $('modeInfo').textContent = t('Πρωτόκολλο: PX100 (πλήρης έλεγχος)');
+    st.pollN = 0;
+    poll();                                   // από εδώ και πέρα το poll τρέχει από το onTick
+  } else {
+    setStatus('Συνδέθηκε · μόνο ανάγνωση', 'on');
+    banner(t('Η συσκευή στέλνει δεδομένα με το πρωτόκολλο Atorch, που δεν επιτρέπει ρύθμιση ρεύματος και αποκοπής από τον υπολογιστή. Ρύθμισέ τα από τα κουμπιά του DL24 — η ανάγνωση, το γράφημα και το τεστ δουλεύουν κανονικά.'));
+  }
+  applyModeUI();
+}
+
+async function disconnect() {
+  if (st.test && !confirm(t('Τρέχει τεστ. Αν αποσυνδεθείς, η καταγραφή θα σταματήσει και το τεστ θα αποθηκευτεί ως διακομμένο (το DL24 θα συνεχίσει να εκφορτίζει μέχρι την αποκοπή).\n\nΑποσύνδεση;'))) return;
+  st.keep = false; st.reconnecting = false;
+  if (st.test) finishTest('Διακόπηκε (αποσύνδεση)');
+  try { if (st.reader) await st.reader.cancel(); } catch (e) {}
+  await sleep(100);
+  try { if (st.port) await st.port.close(); } catch (e) {}
+  st.port = null; st.mode = null; st.pending = null; st.chain = Promise.resolve();
+  st.live.on = null;
+  setStatus('Αποσυνδεδεμένο');
+  $('btnConnect').textContent = t('Σύνδεση'); $('btnConnect').classList.add('blue');
+  $('modeInfo').textContent = '';
+  applyModeUI(); render();
+}
+
+$('btnConnect').onclick = () => st.port ? disconnect() : connect();
+
+/* ---------- αυτόματη επανασύνδεση ---------- */
+// Καλείται όταν πέσει η σύνδεση χωρίς να το ζητήσει ο χρήστης. Το DL24 συνεχίζει μόνο του,
+// οπότε κρατάμε το τεστ ζωντανό και ξαναδοκιμάζουμε να ανοίξουμε τη θύρα.
+async function connectionLost(reason) {
+  if (st.reconnecting || !st.keep) return;
+  st.reconnecting = true; st.reconnTries = 0; st.gapNext = true;
+  log('INFO', t('Χάθηκε η σύνδεση (') + reason + ')');
+  if (st.test) saveRunning();
+  st.mode = null; st.pending = null; st.chain = Promise.resolve();
+  try { if (st.reader) await st.reader.cancel(); } catch (e) {}
+  await sleep(100);
+  try { if (st.port) await st.port.close(); } catch (e) {}
+  setStatus('Επανασύνδεση…', 'wait');
+  banner(t('Χάθηκε η σύνδεση με το DL24 — προσπαθώ να ξανασυνδεθώ αυτόματα.') +
+    (st.test ? t(' Το τεστ συνεχίζει κανονικά μέσα στη συσκευή και η καταγραφή θα συνεχιστεί μόλις επανέλθει η σύνδεση.') : ''));
+  applyModeUI();
+}
+async function attemptReconnect() {
+  if (st.reopenBusy || !st.reconnecting || !st.keep) return;
+  st.reopenBusy = true; st.reconnTries++;
+  $('statusTxt').textContent = t('Επανασύνδεση… (προσπάθεια ') + st.reconnTries + ')';
+  try {
+    const cands = st.port ? [st.port] : [];
+    try {
+      for (const p of await navigator.serial.getPorts()) {
+        let info = null; try { info = JSON.stringify(p.getInfo()); } catch (e) {}
+        if (p !== st.port && st.portInfo && info === st.portInfo) cands.push(p);
+      }
+    } catch (e) {}
+    for (const p of cands) {
+      try { await p.open({ baudRate: 9600 }); }
+      catch (e) { log('INFO', t('Η θύρα δεν άνοιξε ακόμα: ') + e.message); continue; }
+      if (!st.keep) { try { await p.close(); } catch (e) {} return; }
+      st.port = p; st.buf = []; st.fails = 0; st.atorchSeen = false; st.lastRx = Date.now();
+      st.chain = Promise.resolve(); st.pending = null;
+      log('INFO', t('Η θύρα ξανάνοιξε'));
+      st.reconnecting = false;
+      readLoop();
+      await sleep(1500);
+      await detect();
+      if (st.mode) {
+        banner(t('✓ Η σύνδεση αποκαταστάθηκε') + (st.test ? t(' — η καταγραφή του τεστ συνεχίζει.') : '.'));
+        $('banner').className = 'banner ok';
+        setTimeout(() => { if ($('banner').classList.contains('ok')) banner(null); }, 8000);
+      }
+      return;
+    }
+  } finally { st.reopenBusy = false; }
+}
+
+/* ---------- ρολόι (σε Worker, για να μην «κοιμάται» όταν το παράθυρο δεν φαίνεται) ---------- */
+function onTick() {
+  st.tick++;
+  if (st.reconnecting) { if (st.tick % 3 === 0) attemptReconnect(); return; }
+  if (st.mode === 'px100') poll();
+  // επιτηρητής: η θύρα είναι «ανοιχτή» αλλά δεν έρχεται τίποτα (π.χ. το Bluetooth κόπηκε σιωπηλά)
+  if (st.mode && st.keep && Date.now() - st.lastRx > 15000) connectionLost(t('καμία απάντηση για 15 δευτερόλεπτα'));
+  if (st.test && st.tick % 60 === 0) saveRunning();
+}
+(function startTicker() {
+  let fallback = false;
+  const useTimer = () => { if (!fallback) { fallback = true; setInterval(onTick, 1000); } };
+  try {
+    const w = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},1000)'], { type: 'text/javascript' })));
+    w.onmessage = onTick; w.onerror = useTimer;
+  } catch (e) { useTimer(); }
+})();
+
+/* ---------- να μην κοιμάται ο υπολογιστής όσο τρέχει τεστ ---------- */
+async function wakeOn() {
+  if (!st.test) return;
+  if (!('wakeLock' in navigator)) { updateWakeNote(); return; }
+  try {
+    st.wake = await navigator.wakeLock.request('screen');
+    st.wake.addEventListener('release', () => { st.wake = null; updateWakeNote(); });
+  } catch (e) { st.wake = null; }
+  updateWakeNote();
+}
+function wakeOff() { try { if (st.wake) st.wake.release(); } catch (e) {} st.wake = null; updateWakeNote(); }
+function updateWakeNote() {
+  const n = $('wakeNote');
+  if (!st.test) { n.hidden = true; return; }
+  n.hidden = false;
+  if (st.wake) { n.className = 'note'; n.textContent = t('☀︎ Ο υπολογιστής δεν θα μπει σε αναστολή όσο τρέχει το τεστ.'); }
+  else if (document.visibilityState === 'hidden') { n.className = 'note warn'; n.textContent = t('⚠︎ Το παράθυρο είναι ελαχιστοποιημένο — τα Windows μπορεί να μπουν σε αναστολή. Άφησέ το ανοιχτό (μπορεί να είναι πίσω από άλλα παράθυρα).'); }
+  else { n.className = 'note warn'; n.textContent = t('⚠︎ Δεν μπόρεσα να εμποδίσω την αναστολή. Βάλε «Αναστολή: Ποτέ» στις ρυθμίσεις ενέργειας των Windows για όσο διαρκεί το τεστ.'); }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && st.test && !st.wake) wakeOn(); else updateWakeNote();
+});
+
+/* ---------- αποθήκευση τεστ σε εξέλιξη & συνέχιση ---------- */
+const RUN_KEY = 'dl24-running-v1';
+function saveRunning() {
+  const T = st.test; if (!T) return;
+  try {
+    localStorage.setItem(RUN_KEY, JSON.stringify({
+      name: T.name, current: T.current, cutoff: T.cutoff, start: T.start, v0: T.v0,
+      lastMah: st.live.mah, lastWh: st.live.wh, savedAt: Date.now(), samples: downsample(T.samples, 3000)
+    }));
+  } catch (e) { log('INFO', t('Η αυτόματη αποθήκευση απέτυχε: ') + e.message); }
+}
+function clearRunning() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
+function loadRunning() { try { return JSON.parse(localStorage.getItem(RUN_KEY) || 'null'); } catch (e) { return null; } }
+function checkResume() {
+  const R = loadRunning(); if (!R) return;
+  const ago = Math.round((Date.now() - R.savedAt) / 60000);
+  $('resumeTxt').textContent = t('Βρέθηκε τεστ που δεν ολοκληρώθηκε: «') + R.name + t('», ξεκίνησε ') + fmtDate(new Date(R.start)) +
+    t(', τελευταία καταγραφή πριν από ') + (ago < 1 ? t('λιγότερο από 1 λεπτό') : ago + t(' λεπτά')) + ' (' + (R.lastMah == null ? '—' : Math.round(R.lastMah)) + ' mAh). ' +
+    t('Αν το DL24 μετράει ακόμα (ή τελείωσε χωρίς να το σβήσεις), πάτα «Συνέχεια τεστ» και μετά «Σύνδεση» — θα πάρω το τελικό αποτέλεσμα από τη συσκευή.');
+  $('resumeBox').hidden = false;
+}
+$('btnResume').onclick = () => {
+  const R = loadRunning(); $('resumeBox').hidden = true; if (!R) return;
+  st.test = { name: R.name, current: R.current, cutoff: R.cutoff, start: R.start, v0: R.v0,
+              samples: R.samples || [], seenOn: true, offCount: 0, lastMah: R.lastMah, lastWh: R.lastWh };
+  st.samples = st.test.samples.slice(); st.t0 = R.start; st.gapNext = true;
+  $('inName').value = R.name;
+  $('btnTest').textContent = t('Διακοπή τεστ');
+  $('progWrap').hidden = R.cutoff == null;
+  setTS(() => st.mode ? t('Συνεχίζει…') : t('Συνεχίζει — πάτα «Σύνδεση» για να συνδεθείς στο DL24.'));
+  applyModeUI(); setView('live'); wakeOn();
+};
+$('btnResumeSave').onclick = () => {
+  const R = loadRunning(); $('resumeBox').hidden = true; if (!R) return;
+  const last = R.samples && R.samples.length ? R.samples[R.samples.length - 1] : null;
+  st.hist.unshift({ id: Date.now(), date: new Date(R.start).toISOString(), name: R.name, current: R.current, cutoff: R.cutoff,
+    mah: R.lastMah, wh: R.lastWh, dur: last ? last.t : (R.savedAt - R.start) / 1000, reason: 'Διακόπηκε (έκλεισε η κονσόλα)', samples: R.samples || [] });
+  saveHist(); renderHist(); clearRunning();
+};
+$('btnResumeDrop').onclick = () => {
+  if (!confirm(t('Να διαγραφεί το τεστ που δεν ολοκληρώθηκε;'))) return;
+  $('resumeBox').hidden = true; clearRunning();
+};
+
+/* ---------- ανάγνωση PX100 ---------- */
+async function poll() {
+  if (st.pollBusy || st.mode !== 'px100') return;
+  st.pollBusy = true;
+  try {
+    const on = await px(0x10), mv = await px(0x11), ma = await px(0x12),
+          mah = await px(0x14), mwh = await px(0x15), tm = await px(0x13), tc = await px(0x16);
+    let pa = null, cv = null;
+    if (st.pollN % 5 === 0) { pa = await px(0x17); cv = await px(0x18); }
+    st.pollN++;
+    if (!mv && !ma) {
+      st.fails++;
+      if (st.fails >= 5) setStatus('Η συσκευή δεν απαντά…', 'wait');
+      return;
+    }
+    if (st.fails >= 5) setStatus('Συνδέθηκε · πλήρης έλεγχος', 'on');
+    st.fails = 0;
+    const v24 = a => (a[0] << 16) | (a[1] << 8) | a[2];
+    const L = st.live;
+    if (on) L.on = on[2] === 1;
+    if (mv) L.v = v24(mv) / 1000;
+    if (ma) L.a = v24(ma) / 1000;
+    if (mah) L.mah = v24(mah);
+    if (mwh) L.wh = v24(mwh) / 1000;
+    if (tm) L.time = tm[0] * 3600 + tm[1] * 60 + tm[2];
+    if (tc) L.temp = v24(tc);
+    if (pa) L.presetA = v24(pa) / 100;
+    if (cv) L.cutV = v24(cv) / 100;
+    pushSample(); render(); checkTest();
+  } finally { st.pollBusy = false; }
+}
+
+/* ---------- έλεγχος ---------- */
+async function setCurrent(a) { const c = Math.round(a * 100); await px(0x02, Math.floor(c / 100), c % 100, true); st.pollN = 0; }
+async function setCutoff(v) { const c = Math.round(v * 100); await px(0x03, Math.floor(c / 100), c % 100, true); st.pollN = 0; }
+
+async function applySettings() {
+  if (st.mode !== 'px100') return;
+  const a = num('inCur'), v = num('inCut');
+  if (isNaN(a) || a < 0 || a > 20) { banner(t('Βάλε ρεύμα από 0 έως 20 A.'), true); return; }
+  if (isNaN(v) || v < 0 || v > 200) { banner(t('Βάλε τάση αποκοπής από 0 έως 200 V.'), true); return; }
+  banner(null);
+  const b = $('btnApply'); b.disabled = true; b.textContent = t('Αποστολή…');
+  try { await setCurrent(a); await setCutoff(v); }
+  finally { b.textContent = t('Ορισμός'); applyModeUI(); }
+  $('presets').textContent = t('Επιβεβαίωση από τη συσκευή…');
+}
+$('btnApply').onclick = applySettings;
+['inCur', 'inCut'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applySettings(); } }));
+
+$('btnOn').onclick = async () => {
+  if (st.mode === 'px100') { await px(0x01, 1, 0, true); st.pollN = 0; }
+  else if (st.mode === 'atorch') await atCmd(0x32);   // εναλλαγή ON/OFF
+};
+$('btnOff').onclick = async () => { if (st.mode === 'px100') { await px(0x01, 0, 0, true); st.pollN = 0; } };
+$('btnReset').onclick = async () => {
+  if (st.mode === 'px100') await px(0x05, 0, 0, true);
+  else if (st.mode === 'atorch') await atCmd(0x05);
+};
+
+function applyModeUI() {
+  const conn = !!st.mode, full = st.mode === 'px100', at = st.mode === 'atorch';
+  ['btnApply', 'inCur', 'inCut', 'btnOff'].forEach(id => $(id).disabled = !full);
+  $('btnOff').hidden = at;
+  $('btnOn').textContent = at ? 'ON / OFF' : 'ON';
+  $('btnOn').disabled = !conn; $('btnReset').disabled = !conn;
+  $('btnTest').disabled = !conn && !st.test;
+  $('testHint').textContent = at
+    ? t('Ρύθμισε ρεύμα και αποκοπή από τα κουμπιά του DL24. Πάτησε «Έναρξη τεστ» (μηδενίζει τους μετρητές) και μετά άναψε το φορτίο από τη συσκευή. Το τεστ τελειώνει όταν μηδενιστεί το ρεύμα.')
+    : t('Χρησιμοποιεί το ρεύμα και την αποκοπή από πάνω. Μηδενίζει τους μετρητές, ανάβει το φορτίο και τελειώνει αυτόματα στην τάση αποκοπής.');
+}
+
+/* ---------- δείγματα & εμφάνιση ---------- */
+function pushSample() {
+  const L = st.live;
+  if (L.v == null) return;
+  const now = Date.now();
+  if (!st.t0) st.t0 = now;
+  const s = { t: (now - st.t0) / 1000, v: L.v, a: L.a || 0, w: L.v * (L.a || 0), mah: L.mah, wh: L.wh, temp: L.temp };
+  if (st.gapNext) { s.gap = true; st.gapNext = false; }   // πρώτο δείγμα μετά από διακοπή: κενό στο γράφημα
+  st.samples.push(s);
+  if (st.samples.length > 50000) st.samples.splice(0, 10000);
+  if (st.test) st.test.samples.push(Object.assign({}, s, { t: (now - st.test.start) / 1000 }));
+  if (!st.viewing) drawChart();
+}
+
+function render() {
+  const L = st.live;
+  $('rV').textContent = fx(L.v, 3);
+  $('rA').textContent = fx(L.a, 3);
+  $('rW').textContent = (L.v == null || L.a == null) ? '—' : (L.v * L.a).toFixed(2);
+  $('rMah').textContent = L.mah == null ? '—' : String(Math.round(L.mah));
+  $('rWh').textContent = fx(L.wh, 3);
+  $('rT').textContent = L.temp == null ? '—' : String(L.temp);
+  $('rTime').textContent = fmtDur(L.time);
+  $('rLoad').textContent = L.on == null ? '—' : (L.on ? 'ON' : 'OFF');
+  $('loadTile').className = 'tile' + (L.on == null ? '' : (L.on ? ' onTile' : ' offTile'));
+  if (L.presetA != null && L.cutV != null) $('presets').textContent = t('✓ Η συσκευή έχει: ') + L.presetA.toFixed(2) + ' A · ' + L.cutV.toFixed(2) + ' V';
+  else if (!st.mode) $('presets').textContent = t('Η συσκευή έχει: —');
+}
+
+/* ---------- τεστ χωρητικότητας ---------- */
+$('btnTest').onclick = async () => {
+  if (st.test) { await stopTest('Διακόπηκε από τον χρήστη'); return; }
+  if (!st.mode) return;
+  const cur = num('inCur'), cut = num('inCut');
+  const name = $('inName').value.trim() || t('Μπαταρία');
+  if (st.mode === 'px100') {
+    if (isNaN(cur) || cur <= 0 || cur > 20) { banner(t('Βάλε ρεύμα τεστ μεγαλύτερο από 0 (έως 20 A).'), true); return; }
+    if (isNaN(cut) || cut <= 0) { banner(t('Βάλε τάση αποκοπής μεγαλύτερη από 0.'), true); return; }
+    if (st.live.v != null && cut >= st.live.v) { banner(t('Η τάση αποκοπής (') + cut.toFixed(2) + t(' V) είναι ίση ή μεγαλύτερη από την τάση της μπαταρίας (') + st.live.v.toFixed(2) + t(' V). Το τεστ θα σταματούσε αμέσως.'), true); return; }
+    banner(null);
+    setTS(() => t('Προετοιμασία…'));
+    await px(0x01, 0, 0, true);
+    await px(0x05, 0, 0, true);
+    await setCurrent(cur);
+    await setCutoff(cut);
+    await sleep(300);
+    await px(0x01, 1, 0, true);
+  } else {
+    banner(null);
+    await atCmd(0x05);
+  }
+  st.test = { name, current: st.mode === 'px100' ? cur : null, cutoff: st.mode === 'px100' ? cut : null,
+              start: Date.now(), samples: [], seenOn: false, offCount: 0, v0: null };
+  st.samples = []; st.t0 = Date.now(); setView('live');
+  $('btnTest').textContent = t('Διακοπή τεστ');
+  setTS(() => t('Σε εξέλιξη…'));
+  $('progWrap').hidden = st.test.cutoff == null; $('prog').style.width = '0%';
+  $('resumeBox').hidden = true;
+  saveRunning(); wakeOn();
+};
+
+function checkTest() {
+  const T = st.test; if (!T) return;
+  const L = st.live;
+  const running = st.mode === 'px100' ? L.on === true : (L.a || 0) > 0.005;
+  if (running) { T.seenOn = true; T.offCount = 0; if (T.v0 == null && (L.a || 0) > 0.005) T.v0 = L.v; }
+  else if (T.seenOn) {
+    T.offCount++;
+    if (T.offCount >= (st.mode === 'px100' ? 2 : 5)) { finishTest('Ολοκληρώθηκε'); return; }
+  } else if (st.mode === 'px100' && Date.now() - T.start > 15000) {
+    finishTest('Το φορτίο δεν ξεκίνησε'); return;
+  }
+  // πρόοδος με βάση την τάση: από την τάση έναρξης μέχρι την αποκοπή
+  if (T.cutoff != null && T.v0 != null && T.v0 > T.cutoff && L.v != null) {
+    const f = Math.min(1, Math.max(0, (T.v0 - L.v) / (T.v0 - T.cutoff)));
+    $('prog').style.width = (f * 100).toFixed(1) + '%';
+  }
+  setTS(() => (T.seenOn ? t('Σε εξέλιξη') : t('Αναμονή για φορτίο')) + ' · ' + fmtDur((Date.now() - T.start) / 1000) +
+    ' · ' + (L.mah == null ? '—' : Math.round(L.mah)) + ' mAh');
+}
+
+async function stopTest(reason) {
+  if (st.mode === 'px100') await px(0x01, 0, 0, true);
+  finishTest(reason);
+}
+
+function finishTest(reason) {
+  const T = st.test; if (!T) return;
+  st.test = null;
+  clearRunning(); wakeOff();
+  $('btnTest').textContent = t('Έναρξη τεστ');
+  $('progWrap').hidden = true;
+  applyModeUI();
+  if (T.samples.length < 3) { setTS(() => t(reason) + t(' · δεν καταγράφηκαν αρκετά δεδομένα')); return; }
+  const L = st.live;
+  // το μεγαλύτερο από: τιμή συσκευής τώρα, τελευταία καταγραφή (σε περίπτωση που η συσκευή μηδενίστηκε στο μεταξύ)
+  const maxK = k => {
+    let m = 0;
+    for (const x of [L[k], T['last' + (k === 'mah' ? 'Mah' : 'Wh')]]) if (x != null && x > m) m = x;
+    for (const s of T.samples) if (s[k] != null && s[k] > m) m = s[k];
+    return m;
+  };
+  const rec = {
+    id: Date.now(), date: new Date(T.start).toISOString(), name: T.name,
+    current: T.current, cutoff: T.cutoff, mah: maxK('mah'), wh: maxK('wh'),
+    dur: (Date.now() - T.start) / 1000, reason, samples: downsample(T.samples, 600)
+  };
+  st.hist.unshift(rec); saveHist(); renderHist();
+  setTS(() => t(reason) + ': ' + (rec.mah == null ? '—' : Math.round(rec.mah)) + ' mAh · ' + fx(rec.wh, 3) + ' Wh · ' + fmtDur(rec.dur));
+}
+
+function downsample(arr, max) {
+  if (arr.length <= max) return arr.slice();
+  const idx = new Set(), step = arr.length / max;
+  for (let i = 0; i < max; i++) idx.add(Math.floor(i * step));
+  idx.add(arr.length - 1);
+  arr.forEach((s, i) => { if (s.gap) idx.add(i); });     // κράτα πάντα τα σημεία διακοπής
+  return [...idx].sort((a, b) => a - b).map(i => arr[i]);
+}
+
+window.addEventListener('beforeunload', e => { if (st.test) { saveRunning(); e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- ιστορικό ---------- */
+function loadHist() { try { st.hist = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch (e) { st.hist = []; } }
+function saveHist() {
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(st.hist)); }
+  catch (e) { banner(t('Δεν μπόρεσα να αποθηκεύσω το ιστορικό σε αυτόν τον browser. Κατέβασε τα τεστ σε CSV για να μη χαθούν.'), true); }
+}
+const checked = new Set();
+function updateHistBar() {
+  for (const id of [...checked]) if (!st.hist.some(r => r.id === id)) checked.delete(id);
+  const n = checked.size, total = st.hist.length;
+  $('histCount').textContent = total ? (n ? n + t(' από ') + total + t(' επιλεγμένα') : total + L(' τεστ', total === 1 ? ' test' : ' tests')) : '';
+  $('btnDelSel').disabled = n === 0;
+  $('btnDelSel').textContent = n ? t('Διαγραφή επιλεγμένων (') + n + ')' : t('Διαγραφή επιλεγμένων');
+  $('btnDelSel').classList.toggle('danger', n > 0);
+  $('btnDelAll').disabled = total === 0;
+  const all = $('chkAll');
+  all.checked = total > 0 && n === total; all.indeterminate = n > 0 && n < total; all.disabled = total === 0;
+}
+function deleteTests(ids) {
+  const set = new Set(ids);
+  st.hist = st.hist.filter(r => !set.has(r.id));
+  for (const id of set) checked.delete(id);
+  if (st.selHist && set.has(st.selHist.id)) st.selHist = null;
+  saveHist();
+  if (st.viewing && !st.viewing.imported && set.has(st.viewing.id)) setView('live'); else renderHist();
+}
+$('chkAll').onchange = () => {
+  if ($('chkAll').checked) st.hist.forEach(r => checked.add(r.id)); else checked.clear();
+  renderHist();
+};
+$('btnDelSel').onclick = () => {
+  const n = checked.size; if (!n) return;
+  if (!confirm(t('Διαγραφή ') + (n === 1 ? t('του επιλεγμένου τεστ') : t('των ') + n + t(' επιλεγμένων τεστ')) + t(';\nΔεν μπορεί να αναιρεθεί.'))) return;
+  deleteTests([...checked]);
+};
+$('btnDelAll').onclick = () => {
+  const n = st.hist.length; if (!n) return;
+  if (!confirm(t('Διαγραφή ΟΛΩΝ των τεστ από το ιστορικό (') + n + t(');\nΔεν μπορεί να αναιρεθεί — αν θέλεις να τα κρατήσεις, κατέβασέ τα πρώτα σε CSV.'))) return;
+  deleteTests(st.hist.map(r => r.id));
+};
+
+function renderHist() {
+  const tb = $('hist'); tb.innerHTML = '';
+  $('histEmpty').hidden = st.hist.length > 0;
+  for (const r of st.hist) {
+    const tr = document.createElement('tr');
+    if (st.viewing && st.viewing.id === r.id) tr.className = 'sel';
+    else if (checked.has(r.id)) tr.className = 'checked';
+    const tdk = document.createElement('td'); tdk.className = 'chk';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = checked.has(r.id);
+    cb.onclick = e => e.stopPropagation();
+    cb.onchange = () => { if (cb.checked) checked.add(r.id); else checked.delete(r.id); renderHist(); };
+    tdk.onclick = e => { e.stopPropagation(); if (e.target !== cb) cb.click(); };
+    tdk.appendChild(cb); tr.appendChild(tdk);
+    const d = new Date(r.date);
+    const cells = [
+      d.toLocaleDateString(loc(), { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + d.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }),
+      r.name,
+      r.current == null ? '—' : r.current.toFixed(2) + ' A',
+      r.cutoff == null ? '—' : r.cutoff.toFixed(2) + ' V',
+      r.mah == null ? '—' : String(Math.round(r.mah)),
+      fx(r.wh, 2), fmtDur(r.dur)
+    ];
+    cells.forEach((c, i) => {
+      const td = document.createElement('td');
+      if (i === 4) { const b = document.createElement('b'); b.textContent = c; td.appendChild(b); } else td.textContent = c;
+      if (i >= 2) td.className = 'n';
+      tr.appendChild(td);
+    });
+    const tdc = document.createElement('td'); const chip = document.createElement('span');
+    chip.className = 'chip' + (r.reason === 'Ολοκληρώθηκε' ? ' good' : ''); chip.textContent = t(r.reason) || '—';
+    tdc.appendChild(chip); tr.appendChild(tdc);
+    const act = document.createElement('td'); act.className = 'act';
+    const b2 = document.createElement('button'); b2.className = 'btn small'; b2.textContent = 'CSV';
+    b2.onclick = e => { e.stopPropagation(); exportCsv(r.samples, 'dl24-' + safeName(r.name) + '-' + stamp(new Date(r.date))); };
+    const b3 = document.createElement('button'); b3.className = 'btn small'; b3.textContent = t('Διαγραφή');
+    b3.onclick = e => {
+      e.stopPropagation();
+      if (!confirm(t('Διαγραφή του τεστ «') + r.name + t('»;'))) return;
+      deleteTests([r.id]);
+    };
+    act.append(b2, b3); tr.appendChild(act);
+    tr.onclick = () => { st.selHist = r; setView('hist'); };
+    tb.appendChild(tr);
+  }
+  updateHistBar();
+}
+
+/* ---------- προβολές: Ζωντανά / Ιστορικό / Αρχείο ---------- */
+function setView(v) {
+  if (v === 'hist') {
+    const r = st.selHist || st.hist[0];
+    if (!r) { banner(t('Δεν υπάρχουν αποθηκευμένα τεστ ακόμα.')); v = 'live'; }
+    else { st.selHist = r; st.viewing = r; }
+  } else if (v === 'file') {
+    if (!st.imported) { $('fileCsv').value = ''; $('fileCsv').click(); return; }
+    st.viewing = st.imported;
+  }
+  if (v === 'live') st.viewing = null;
+  for (const b of $('seg').children) b.classList.toggle('on', b.dataset.view === v);
+  hideTips();
+  updateChartTitle(); renderHist(); drawChart();
+}
+for (const b of $('seg').children) b.onclick = () => setView(b.dataset.view);
+
+/* ---------- CSV ---------- */
+const stamp = d => d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+const safeName = s => s.replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 40);
+function exportCsv(data, name) {
+  if (!data || !data.length) { banner(t('Δεν υπάρχουν δεδομένα για εξαγωγή.'), true); return; }
+  // Ελληνικό Excel: διαχωριστικό «;» και υποδιαστολή «,»
+  // Αγγλικό Excel: διαχωριστικό «,» και υποδιαστολή «.»
+  const en = lang === 'en', sep = en ? ',' : ';';
+  const n = (x, d) => (x == null || isNaN(x)) ? '' : (en ? x.toFixed(d) : x.toFixed(d).replace('.', ','));
+  const lines = [en ? 'Time (s),Voltage (V),Current (A),Power (W),Capacity (mAh),Energy (Wh),MOSFET temperature (°C)'
+                    : 'Χρόνος (s);Τάση (V);Ρεύμα (A);Ισχύς (W);Χωρητικότητα (mAh);Ενέργεια (Wh);Θερμοκρασία MOSFET (°C)'];
+  for (const s of data) lines.push([n(s.t, 1), n(s.v, 3), n(s.a, 3), n(s.w, 3), n(s.mah, 0), n(s.wh, 3), n(s.temp, 0)].join(sep));
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$('btnCsv').onclick = () => {
+  if (st.viewing) exportCsv(st.viewing.samples, 'dl24-' + safeName(st.viewing.name) + '-' + stamp(viewDate() || new Date()));
+  else exportCsv(st.samples, 'dl24-' + stamp(new Date()));
+};
+$('btnClear').onclick = () => {
+  if (st.viewing) return;
+  if (st.test) { banner(t('Δεν γίνεται καθαρισμός όσο τρέχει τεστ.'), true); return; }
+  st.samples = []; st.t0 = null; drawChart();
+};
+function viewTitle() {
+  if (!st.viewing) return t('Ζωντανό γράφημα');
+  return (st.viewing.imported ? t('Αρχείο: ') : t('Τεστ: ')) + st.viewing.name;
+}
+function updateChartTitle() {
+  $('chartTitle').textContent = viewTitle();
+  $('btnClear').disabled = !!st.viewing;
+}
+
+/* ---------- γράφημα ---------- */
+function drawChart() {
+  if (st.drawPending) return;
+  st.drawPending = true;
+  requestAnimationFrame(() => {
+    st.drawPending = false;
+    draw($('chart'));
+    if (!$('modal').hidden) { draw($('bigChart'), 12); renderResults(); }
+  });
+}
+const curData = () => st.viewing ? st.viewing.samples : st.samples;
+function cssVars() {
+  const css = getComputedStyle(document.documentElement), g = n => css.getPropertyValue(n).trim();
+  return { volt: g('--volt'), amp: g('--amp'), mono: g('--mono'), font: g('--font'), card: g('--card'), card2: g('--card2'),
+           sep: g('--sep'), grid: g('--grid'), text: g('--text'), muted: g('--muted'), accent: g('--accent') };
+}
+function draw(cv, fs = 11) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, W, H);
+  const data = curData();
+  cv._geo = plot(c, data, 0, 0, W, H, fs);
+  const h = st.hover[cv.id];
+  if (h != null && cv._geo) drawCursor(c, cv, data, h);
+}
+// Σχεδιάζει το διάγραμμα μέσα σε ορθογώνιο (ox, oy, W, H) οποιουδήποτε canvas· επιστρέφει τη γεωμετρία
+function plot(c, data, ox, oy, W, H, fs = 11) {
+  const cs = cssVars(), colV = cs.volt, colA = cs.amp;
+  c.save();
+  c.translate(ox, oy);
+  c.font = fs + 'px ' + cs.mono;
+  const padL = fs * 4.6, padR = fs * 4.6, padT = 12, padB = fs + 18, pw = W - padL - padR, ph = H - padT - padB;
+  if (!data || data.length < 2) {
+    c.fillStyle = cs.muted; c.font = '13px ' + cs.font; c.textAlign = 'center';
+    c.fillText(t('Δεν υπάρχουν δεδομένα ακόμα'), W / 2, H / 2); c.restore(); return null;
+  }
+  const t0 = data[0].t, t1 = Math.max(data[data.length - 1].t, t0 + 1);
+  let vmin = Infinity, vmax = -Infinity, amax = 0;
+  for (const s of data) { if (s.v < vmin) vmin = s.v; if (s.v > vmax) vmax = s.v; if (s.a > amax) amax = s.a; }
+  let span = vmax - vmin;
+  if (span < 0.1) { vmin -= 0.05; vmax += 0.05; span = vmax - vmin; }
+  vmin = Math.max(0, vmin - span * 0.08); vmax = vmax + span * 0.08;
+  amax = amax > 0 ? amax * 1.15 : 1;
+  const X = t => padL + (t - t0) / (t1 - t0) * pw;
+  const YV = v => padT + (1 - (v - vmin) / (vmax - vmin)) * ph;
+  const YA = a => padT + (1 - a / amax) * ph;
+
+  c.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = Math.round(padT + ph * i / 4) + 0.5;
+    c.strokeStyle = cs.grid; c.beginPath(); c.moveTo(padL, y); c.lineTo(padL + pw, y); c.stroke();
+    c.fillStyle = colV; c.textAlign = 'right'; c.fillText((vmax - (vmax - vmin) * i / 4).toFixed(2), padL - 8, y + 4);
+    c.fillStyle = colA; c.textAlign = 'left'; c.fillText((amax * (1 - i / 4)).toFixed(2), padL + pw + 8, y + 4);
+  }
+  c.fillStyle = cs.muted; c.textAlign = 'center';
+  for (let i = 0; i <= 5; i++) {
+    const t = t0 + (t1 - t0) * i / 5;
+    c.fillText(fmtDur(t - t0), padL + pw * i / 5, H - 6);
+  }
+  c.textAlign = 'left';
+
+  const step = Math.max(1, Math.floor(data.length / (pw * 2)));
+  // gaps=true: η γραμμή «σπάει» εκεί που χάθηκε η σύνδεση
+  const path = (Y, key, gaps) => {
+    c.beginPath();
+    const n = data.length - 1;
+    for (let i = 0; i <= n; i++) {
+      const s = data[i];
+      if (i % step && i !== n && !s.gap) continue;
+      const x = X(s.t), y = Y(s[key]);
+      if (i === 0 || (gaps && s.gap)) c.moveTo(x, y); else c.lineTo(x, y);
+    }
+  };
+  // γέμισμα κάτω από την τάση
+  path(YV, 'v');
+  c.lineTo(X(data[data.length - 1].t), padT + ph); c.lineTo(X(data[0].t), padT + ph); c.closePath();
+  const g = c.createLinearGradient(0, padT, 0, padT + ph);
+  g.addColorStop(0, hexA(colV, .26)); g.addColorStop(1, hexA(colV, 0));
+  c.fillStyle = g; c.fill();
+  c.lineJoin = 'round'; c.lineCap = 'round'; c.lineWidth = 2.2;
+  path(YA, 'a', true); c.strokeStyle = colA; c.stroke();
+  path(YV, 'v', true); c.strokeStyle = colV; c.stroke();
+  // κουκκίδα στο τελευταίο σημείο
+  const last = data[data.length - 1];
+  dotAt(c, X(last.t), YV(last.v), colV);
+  c.restore();
+  return { ox, oy, padL, pw, padT, ph, t0, t1, X, YV, YA };
+}
+function hexA(hex, a) {
+  const m = hex.replace('#', ''); const n = parseInt(m.length === 3 ? m.split('').map(x => x + x).join('') : m, 16);
+  return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+function dotAt(c, x, y, col) {
+  c.beginPath(); c.arc(x, y, 4.5, 0, Math.PI * 2);
+  c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke();
+}
+window.addEventListener('resize', drawChart);
+
+/* ---------- τιμές στο ποντίκι ---------- */
+function nearest(data, t) {
+  let lo = 0, hi = data.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (data[m].t < t) lo = m; else hi = m; }
+  return (t - data[lo].t) < (data[hi].t - t) ? lo : hi;
+}
+function drawCursor(c, cv, data, i) {
+  const g = cv._geo, s = data[i]; if (!s) return;
+  const cs = cssVars(), x = g.X(s.t);
+  c.save();
+  c.strokeStyle = cs.muted; c.lineWidth = 1; c.setLineDash([4, 3]);
+  c.beginPath(); c.moveTo(Math.round(x) + .5, g.padT); c.lineTo(Math.round(x) + .5, g.padT + g.ph); c.stroke();
+  c.setLineDash([]);
+  dotAt(c, x, g.YA(s.a), cs.amp);
+  dotAt(c, x, g.YV(s.v), cs.volt);
+  c.restore();
+  // πλαίσιο τιμών
+  const tip = $(cv.id === 'chart' ? 'tip' : 'bigTip');
+  const row = (l, v, col) => '<div><span>' + l + '</span><em style="font-style:normal' + (col ? ';color:' + col : '') + '">' + v + '</em></div>';
+  tip.innerHTML = t('<b>Χρόνος ') + fmtDur(s.t - data[0].t) + '</b>' +
+    row(t('Τάση'), s.v.toFixed(3) + ' V', 'var(--volt)') + row(t('Ρεύμα'), s.a.toFixed(3) + ' A', 'var(--amp)') +
+    row(t('Ισχύς'), (s.w != null ? s.w : s.v * s.a).toFixed(2) + ' W') +
+    (s.mah != null ? row(t('Χωρητικότητα'), Math.round(s.mah) + ' mAh') : '') +
+    (s.wh != null ? row(t('Ενέργεια'), s.wh.toFixed(3) + ' Wh') : '') +
+    (s.temp != null ? row('MOSFET', s.temp + ' °C') : '');
+  tip.hidden = false;
+  const W = cv.clientWidth, tw = tip.offsetWidth;
+  let left = x + 14; if (left + tw > W - 4) left = x - 14 - tw;
+  tip.style.left = Math.max(4, left) + 'px'; tip.style.top = (g.padT + 6) + 'px';
+}
+function hideTips() { st.hover = {}; $('tip').hidden = true; $('bigTip').hidden = true; }
+for (const id of ['chart', 'bigChart']) {
+  const cv = $(id);
+  cv.addEventListener('mousemove', e => {
+    const g = cv._geo, data = curData();
+    if (!g || !data || data.length < 2) return;
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+    if (x < g.padL - 4 || x > g.padL + g.pw + 4) { cv.dispatchEvent(new Event('mouseleave')); return; }
+    const t = g.t0 + (x - g.padL) / g.pw * (g.t1 - g.t0);
+    st.hover[id] = nearest(data, t);
+    draw(cv, id === 'chart' ? 11 : 12);
+  });
+  cv.addEventListener('mouseleave', () => {
+    if (st.hover[id] == null) return;
+    delete st.hover[id]; $(id === 'chart' ? 'tip' : 'bigTip').hidden = true;
+    draw(cv, id === 'chart' ? 11 : 12);
+  });
+}
+
+/* ---------- αποτελέσματα ελέγχου ---------- */
+function computeResults() {
+  const data = curData() || [], r = st.viewing;
+  if (data.length < 2) return [];
+  const loaded = data.filter(s => s.a > 0.005), use = loaded.length ? loaded : data;
+  const avg = k => use.reduce((x, s) => x + (s[k] || 0), 0) / use.length;
+  const maxOf = k => { let m = null; for (const s of data) if (s[k] != null && !isNaN(s[k]) && (m == null || s[k] > m)) m = s[k]; return m; };
+  const mah = r && r.mah != null ? r.mah : maxOf('mah');
+  const wh = r && r.wh != null ? r.wh : maxOf('wh');
+  const dur = r && r.dur != null ? r.dur : data[data.length - 1].t - data[0].t;
+  const out = [];
+  out.push([t('Χωρητικότητα'), mah == null ? '—' : Math.round(mah) + ' mAh', true]);
+  out.push([t('Ενέργεια'), fx(wh, 3) + ' Wh', true]);
+  out.push([t('Διάρκεια'), fmtDur(dur)]);
+  if (r && r.current != null) out.push([t('Ρεύμα (ρύθμιση)'), r.current.toFixed(2) + ' A']);
+  out.push([t('Μέσο ρεύμα'), avg('a').toFixed(3) + ' A']);
+  if (r && r.cutoff != null) out.push([t('Τάση αποκοπής'), r.cutoff.toFixed(2) + ' V']);
+  out.push([t('Τάση έναρξης'), use[0].v.toFixed(3) + ' V']);
+  out.push([t('Τάση τέλους'), use[use.length - 1].v.toFixed(3) + ' V']);
+  out.push([t('Μέση τάση'), avg('v').toFixed(3) + ' V']);
+  out.push([t('Μέση ισχύς'), avg('w').toFixed(2) + ' W']);
+  const tmax = maxOf('temp');
+  if (tmax != null) out.push([t('Μέγ. θερμ. MOSFET'), tmax + ' °C']);
+  if (r && r.reason) out.push([t('Κατάσταση'), t(r.reason)]);
+  return out;
+}
+function viewDate() {
+  const r = st.viewing;
+  if (!r) return new Date();
+  return r.date ? new Date(r.date) : null;
+}
+const fmtDate = d => d ? d.toLocaleDateString(loc()) + ' ' + d.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) : '';
+function renderResults() {
+  $('mTitle').textContent = viewTitle();
+  $('mSub').textContent = st.viewing ? fmtDate(viewDate()) : t('ενημερώνεται ζωντανά');
+  const box = $('mResults'); box.innerHTML = '';
+  for (const [l, v, hl] of computeResults()) {
+    const d = document.createElement('div'); d.className = 'res' + (hl ? ' hl' : '');
+    const a = document.createElement('div'); a.className = 'lbl'; a.textContent = l;
+    const b = document.createElement('div'); b.className = 'val'; b.textContent = v;
+    d.append(a, b); box.appendChild(d);
+  }
+}
+
+/* ---------- μεγάλο παράθυρο ---------- */
+function openModal() { $('modal').hidden = false; document.body.style.overflow = 'hidden'; drawChart(); }
+function closeModal() { $('modal').hidden = true; document.body.style.overflow = ''; delete st.hover.bigChart; $('bigTip').hidden = true; }
+$('btnExpand').onclick = openModal;
+$('btnClose').onclick = closeModal;
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal').hidden) closeModal(); });
+
+// Εικόνα PNG: τίτλος + διάγραμμα + αποτελέσματα
+$('btnPng').onclick = () => {
+  const data = curData();
+  if (!data || data.length < 2) { alert(t('Δεν υπάρχουν δεδομένα για αποθήκευση.')); return; }
+  const cs = cssVars(), res = computeResults();
+  const W = 1400, chartH = 620, top = 82, cols = 4, gap = 12, cellH = 66, pad = 28;
+  const rows = Math.ceil(res.length / cols);
+  const H = top + chartH + 24 + rows * (cellH + gap) + pad;
+  const S = 2, cv = document.createElement('canvas');
+  cv.width = W * S; cv.height = H * S;
+  const c = cv.getContext('2d'); c.scale(S, S);
+  c.fillStyle = cs.card2; c.fillRect(0, 0, W, H);
+  c.fillStyle = cs.card; c.beginPath(); c.roundRect(pad - 12, top - 8, W - pad * 2 + 24, chartH + 16, 12); c.fill();
+  c.fillStyle = cs.text; c.font = '600 24px ' + cs.font; c.fillText(viewTitle(), pad, 44);
+  c.fillStyle = cs.muted; c.font = '14px ' + cs.font;
+  c.fillText(t('DL24 Κονσόλα') + (viewDate() ? ' · ' + fmtDate(viewDate()) : ''), pad, 66);
+  // υπόμνημα
+  c.font = '14px ' + cs.font; c.textAlign = 'right';
+  c.fillStyle = cs.muted; c.fillText(t('Ρεύμα'), W - pad, 44);
+  const wA = c.measureText(t('Ρεύμα')).width; c.fillStyle = cs.amp; c.beginPath(); c.roundRect(W - pad - wA - 22, 33, 12, 12, 3); c.fill();
+  const xV = W - pad - wA - 38; c.fillStyle = cs.muted; c.fillText(t('Τάση'), xV, 44);
+  const wV = c.measureText(t('Τάση')).width; c.fillStyle = cs.volt; c.beginPath(); c.roundRect(xV - wV - 22, 33, 12, 12, 3); c.fill();
+  c.textAlign = 'left';
+  plot(c, data, pad, top, W - pad * 2, chartH, 14);
+  const cw = (W - pad * 2 - gap * (cols - 1)) / cols, y0 = top + chartH + 24;
+  res.forEach(([l, v, hl], i) => {
+    const x = pad + (i % cols) * (cw + gap), y = y0 + Math.floor(i / cols) * (cellH + gap);
+    c.fillStyle = cs.card; c.beginPath(); c.roundRect(x, y, cw, cellH, 10); c.fill();
+    c.fillStyle = cs.muted; c.font = '500 12px ' + cs.font; c.fillText(l, x + 14, y + 23);
+    c.fillStyle = hl ? cs.volt : cs.text; c.font = (hl ? '600 ' : '') + '22px ' + cs.font; c.fillText(v, x + 14, y + 52);
+  });
+  cv.toBlob(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    const nm = st.viewing ? safeName(st.viewing.name) : 'live';
+    a.download = 'dl24-' + nm + '-' + stamp(viewDate() || new Date()) + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png');
+};
+
+/* ---------- εισαγωγή CSV ---------- */
+$('btnImport').onclick = () => { $('fileCsv').value = ''; $('fileCsv').click(); };
+$('fileCsv').onchange = async () => {
+  const f = $('fileCsv').files[0]; if (!f) return;
+  try {
+    const samples = parseCsv(await f.text());
+    const base = f.name.replace(/\.csv$/i, '');
+    const m = base.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})$/);
+    const date = m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).toISOString() : null;
+    const name = base.replace(/^dl24-/, '').replace(/-?\d{8}-\d{4}$/, '').replace(/_/g, ' ') || base;
+    st.imported = { imported: true, name, date, samples };
+    banner(null); setView('file');
+  } catch (e) {
+    banner(t('Δεν μπόρεσα να διαβάσω το αρχείο: ') + e.message, true);
+  }
+};
+function parseCsv(text) {
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 3) throw new Error(t('το αρχείο έχει πολύ λίγες γραμμές.'));
+  const delim = lines[0].includes(';') ? ';' : (lines[0].includes('\t') ? '\t' : ',');
+  const head = lines[0].split(delim).map(h => h.toLowerCase());
+  const find = (keys, fb) => { const i = head.findIndex(h => keys.some(k => h.includes(k))); return i >= 0 ? i : fb; };
+  const iT = find(['χρόνος', 'time'], 0), iV = find(['τάση', 'volt'], 1), iA = find(['ρεύμα', 'curr', 'amp'], 2),
+        iW = find(['ισχύς', 'power'], 3), iM = find(['mah', 'χωρητ'], 4), iE = find(['ενέργ', 'energy', '(wh)'], 5),
+        iC = find(['θερμ', 'temp'], 6);
+  const toNum = s => {
+    if (s == null) return null;
+    s = s.trim().replace(/^"|"$/g, '');
+    if (s === '') return null;
+    if (delim !== ',') s = s.replace(',', '.');
+    const v = parseFloat(s); return isNaN(v) ? null : v;
+  };
+  const out = [];
+  for (let i = 1; i < lines.length; i++) {
+    const p = lines[i].split(delim);
+    const t = toNum(p[iT]), v = toNum(p[iV]);
+    if (t == null || v == null) continue;
+    const a = toNum(p[iA]) || 0;
+    const w = toNum(p[iW]);
+    out.push({ t, v, a, w: w == null ? v * a : w, mah: toNum(p[iM]), wh: toNum(p[iE]), temp: toNum(p[iC]) });
+  }
+  if (out.length < 2) throw new Error(t('δεν βρέθηκαν μετρήσεις. Χρησιμοποίησε αρχείο που εξήχθη από την Κονσόλα.'));
+  // σημάδεψε διακοπές: άλμα χρόνου πολύ μεγαλύτερο από το συνηθισμένο βήμα
+  const dts = out.slice(1).map((s, i) => s.t - out[i].t).sort((a, b) => a - b);
+  const med = dts[Math.floor(dts.length / 2)] || 1;
+  for (let i = 1; i < out.length; i++) if (out[i].t - out[i - 1].t > Math.max(30, med * 10)) out[i].gap = true;
+  return out;
+}
+
+/* ---------- θέμα: Αυτόματο → Φωτεινό → Σκοτεινό ---------- */
+const THEME_KEY = 'dl24-theme-v1';
+const THEMES = { auto: ['◐', 'Αυτόματο (όπως τα Windows)'], light: ['☀︎', 'Φωτεινό'], dark: ['☾', 'Σκοτεινό'] };
+function applyTheme(th) {
+  if (!THEMES[th]) th = 'auto';
+  if (th === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', th);
+  $('btnTheme').textContent = THEMES[th][0];
+  $('btnTheme').title = t('Θέμα: ') + t(THEMES[th][1]) + t(' — κλικ για αλλαγή');
+  $('btnTheme').dataset.theme = th;
+  drawChart();
+}
+$('btnTheme').onclick = () => {
+  const order = ['auto', 'light', 'dark'];
+  const next = order[(order.indexOf($('btnTheme').dataset.theme) + 1) % 3];
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  applyTheme(next);
+};
+try { applyTheme(localStorage.getItem(THEME_KEY) || 'auto'); } catch (e) { applyTheme('auto'); }
+
+/* ---------- αλλαγή γλώσσας: ξαναγράφει ό,τι δυναμικό υπάρχει στην οθόνη ---------- */
+function relocalize() {
+  if (st.statusArgs) setStatus(...st.statusArgs);
+  $('btnConnect').textContent = t(st.port ? 'Αποσύνδεση' : 'Σύνδεση');
+  $('btnTest').textContent = t(st.test ? 'Διακοπή τεστ' : 'Έναρξη τεστ');
+  $('btnApply').textContent = t('Ορισμός');
+  if (st.tsFn) $('testState').textContent = st.tsFn();
+  $('modeInfo').textContent = st.mode === 'px100' ? t('Πρωτόκολλο: PX100 (πλήρης έλεγχος)') : st.mode === 'atorch' ? t('Πρωτόκολλο: Atorch (τύπος ') + '2)' : '';
+  if (!(st.live.presetA != null && st.live.cutV != null)) $('presets').textContent = t('Η συσκευή έχει: —');
+  applyModeUI(); render(); renderHist(); updateChartTitle(); updateWakeNote();
+  applyTheme($('btnTheme').dataset.theme);
+  // ενημερωτικά μηνύματα: ξαναγράφεται μόνο της επανασύνδεσης, τα υπόλοιπα κρύβονται
+  if (st.reconnecting) banner(t('Χάθηκε η σύνδεση με το DL24 — προσπαθώ να ξανασυνδεθώ αυτόματα.') +
+    (st.test ? t(' Το τεστ συνεχίζει κανονικά μέσα στη συσκευή και η καταγραφή θα συνεχιστεί μόλις επανέλθει η σύνδεση.') : ''));
+  else if (!('serial' in navigator)) banner(t('Αυτός ο browser δεν υποστηρίζει σύνδεση με σειριακή θύρα. Άνοιξε το αρχείο με Google Chrome ή Microsoft Edge σε υπολογιστή.'), true);
+  else banner(null);
+  if (!$('resumeBox').hidden) checkResume();
+  drawChart();
+}
+
+/* ---------- εκκίνηση ---------- */
+(function () {
+  let l = null;
+  try { l = localStorage.getItem(LANG_KEY); } catch (e) {}
+  if (!l) l = (navigator.language || '').toLowerCase().startsWith('el') ? 'el' : 'en';
+  lang = l; document.documentElement.lang = l; $('btnLang').textContent = l.toUpperCase(); applyStatic();
+})();
+try { localStorage.removeItem('dl24-ext-v1'); } catch (e) {}
+loadHist(); renderHist(); applyModeUI(); render(); drawChart();
+if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawChart);
+if (!('serial' in navigator)) {
+  banner(t('Αυτός ο browser δεν υποστηρίζει σύνδεση με σειριακή θύρα. Άνοιξε το αρχείο με Google Chrome ή Microsoft Edge σε υπολογιστή.'), true);
+  $('btnConnect').disabled = true;
+} else {
+  navigator.serial.addEventListener('disconnect', e => {
+    if (st.port && e.target === st.port && st.keep) connectionLost(t('η συσκευή αποσυνδέθηκε'));
+  });
+  navigator.serial.addEventListener('connect', () => { if (st.reconnecting) attemptReconnect(); });
+}
+checkResume();
+relocalize();
+</script>
+</body>
+</html>
